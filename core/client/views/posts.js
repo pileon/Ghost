@@ -1,38 +1,22 @@
-import {mobileQuery, responsiveAction} from 'ghost/utils/mobile';
+import MobileParentView from 'ghost/views/mobile/parent-view';
 
-var PostsView = Ember.View.extend({
-    target: Ember.computed.alias('controller'),
+var PostsView = MobileParentView.extend({
     classNames: ['content-view-container'],
     tagName: 'section',
 
-    mobileInteractions: function () {
-        Ember.run.scheduleOnce('afterRender', this, function () {
-            var self = this;
-
-            $(window).resize(function () {
-                if (!mobileQuery.matches) {
-                    self.send('resetContentPreview');
-                }
-            });
-
-            // ### Add the blog URL to the <a> version of the ghost logo
-            $('.ghost-logo-link').attr('href', this.get('controller.ghostPaths').blogRoot);
-
-            // ### Show content preview when swiping left on content list
-            $('.manage').on('click', '.content-list ol li', function (event) {
-                responsiveAction(event, '(max-width: 800px)', function () {
-                    self.send('showContentPreview');
-                });
-            });
-
-            // ### Hide content preview
-            $('.manage').on('click', '.content-preview .button-back', function (event) {
-                responsiveAction(event, '(max-width: 800px)', function () {
-                    self.send('hideContentPreview');
-                });
-            });
-        });
-    }.on('didInsertElement'),
+    // Mobile parent view callbacks
+    showMenu: function () {
+        $('.js-content-list').animate({right: '0', left: '0', 'margin-right': '0'}, 300);
+        $('.js-content-preview').animate({right: '-100%', left: '100%', 'margin-left': '15px'}, 300);
+    },
+    showContent: function () {
+        $('.js-content-list').animate({right: '100%', left: '-100%', 'margin-right': '15px'}, 300);
+        $('.js-content-preview').animate({right: '0', left: '0', 'margin-left': '0'}, 300);
+    },
+    showAll: function () {
+        $('.js-content-list').removeAttr('style');
+        $('.js-content-preview').removeAttr('style');
+    }
 });
 
 export default PostsView;
