@@ -2,6 +2,7 @@ var PostTagsInputView = Ember.View.extend({
     tagName: 'section',
     elementId: 'entry-tags',
     classNames: 'publish-bar-inner',
+    classNameBindings: ['hasFocus:focused'],
 
     templateName: 'post-tags-input',
 
@@ -42,7 +43,6 @@ var PostTagsInputView = Ember.View.extend({
         return styles.join(';');
     }),
 
-
     tagInputView: Ember.TextField.extend({
         focusIn: function () {
             this.get('parentView').set('hasFocus', true);
@@ -50,10 +50,6 @@ var PostTagsInputView = Ember.View.extend({
 
         focusOut: function () {
             this.get('parentView').set('hasFocus', false);
-
-            // if (!Ember.isEmpty(this.get('value'))) {
-            //     this.get('parentView.controller').send('addNewTag');
-            // }
         },
 
         keyDown: function (event) {
@@ -108,19 +104,6 @@ var PostTagsInputView = Ember.View.extend({
         }
     }),
 
-
-    tagView: Ember.View.extend({
-        tagName: 'span',
-        classNames: 'tag',
-
-        tag: null,
-
-        click: function () {
-            this.get('parentView.controller').send('deleteTag', this.get('tag'));
-        }
-    }),
-
-
     suggestionView: Ember.View.extend({
         tagName: 'li',
         classNameBindings: 'suggestion.selected',
@@ -138,8 +121,17 @@ var PostTagsInputView = Ember.View.extend({
             event.preventDefault();
             this.get('parentView.controller').send('addTag',
                 this.get('suggestion.tag'));
-        },
-    })
+        }
+    }),
+
+    actions: {
+        deleteTag: function (tag) {
+            // The view wants to keep focus on the input after a click on a tag
+            Ember.$('.js-tag-input').focus();
+            // Make the controller do the actual work
+            this.get('controller').send('deleteTag', tag);
+        }
+    }
 });
 
 export default PostTagsInputView;

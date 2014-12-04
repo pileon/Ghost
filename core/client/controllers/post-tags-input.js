@@ -1,5 +1,4 @@
 var PostTagsInputController = Ember.Controller.extend({
-
     tagEnteredOrder: Ember.A(),
 
     tags: Ember.computed('parentController.tags', function () {
@@ -48,6 +47,7 @@ var PostTagsInputController = Ember.Controller.extend({
                 return;
             }
 
+            newTagText = newTagText.trim();
             searchTerm = newTagText.toLowerCase();
 
             // add existing tag if we have a match
@@ -77,8 +77,10 @@ var PostTagsInputController = Ember.Controller.extend({
         },
 
         deleteTag: function (tag) {
-            this.get('tags').removeObject(tag);
-            this.get('tagEnteredOrder').removeObject(tag.get('name'));
+            if (tag) {
+                this.get('tags').removeObject(tag);
+                this.get('tagEnteredOrder').removeObject(tag.get('name'));
+            }
         },
 
         deleteLastTag: function () {
@@ -132,7 +134,10 @@ var PostTagsInputController = Ember.Controller.extend({
 
         addSelectedSuggestion: function () {
             var suggestion = this.get('selectedSuggestion');
-            if (Ember.isEmpty(suggestion)) { return; }
+
+            if (Ember.isEmpty(suggestion)) {
+                return;
+            }
 
             this.send('addTag', suggestion.get('tag'));
         },
@@ -143,9 +148,9 @@ var PostTagsInputController = Ember.Controller.extend({
         }
     },
 
-
     selectedSuggestion: Ember.computed('suggestions.@each.selected', function () {
         var suggestions = this.get('suggestions');
+
         if (suggestions && suggestions.get('length')) {
             return suggestions.filterBy('selected').get('firstObject');
         } else {
@@ -153,13 +158,12 @@ var PostTagsInputController = Ember.Controller.extend({
         }
     }),
 
-
     updateSuggestionsList: function () {
         var searchTerm = this.get('newTagText'),
             matchingTags,
             // Limit the suggestions number
             maxSuggestions = 5,
-            suggestions = new Ember.A();
+            suggestions = Ember.A();
 
         if (!searchTerm || Ember.isEmpty(searchTerm.trim())) {
             this.set('suggestions', null);
@@ -178,11 +182,11 @@ var PostTagsInputController = Ember.Controller.extend({
         this.set('suggestions', suggestions);
     }.observes('newTagText'),
 
-
     findMatchingTags: function (searchTerm) {
         var matchingTags,
             self = this,
-            allTags = this.store.all('tag');
+            allTags = this.store.all('tag'),
+            deDupe = {};
 
         if (allTags.get('length') === 0) {
             return [];
@@ -192,12 +196,21 @@ var PostTagsInputController = Ember.Controller.extend({
 
         matchingTags = allTags.filter(function (tag) {
             var tagNameMatches,
-                hasAlreadyBeenAdded;
+                hasAlreadyBeenAdded,
+                tagName = tag.get('name');
 
-            tagNameMatches = tag.get('name').toLowerCase().indexOf(searchTerm) !== -1;
-            hasAlreadyBeenAdded = self.hasTag(tag.get('name'));
+            tagNameMatches = tagName.toLowerCase().indexOf(searchTerm) !== -1;
+            hasAlreadyBeenAdded = self.hasTag(tagName);
 
-            return tagNameMatches && !hasAlreadyBeenAdded;
+            if (tagNameMatches && !hasAlreadyBeenAdded) {
+                if (typeof deDupe[tagName] === 'undefined') {
+                    deDupe[tagName] = 1;
+                } else {
+                    deDupe[tagName] += 1;
+                }
+            }
+
+            return deDupe[tagName] === 1;
         });
 
         return matchingTags;
@@ -209,11 +222,13 @@ var PostTagsInputController = Ember.Controller.extend({
 
     makeSuggestionObject: function (matchingTag, _searchTerm) {
         var searchTerm = Ember.Handlebars.Utils.escapeExpression(_searchTerm),
+            // jscs:disable
             regexEscapedSearchTerm = searchTerm.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'),
+            // jscs:enable
             tagName = Ember.Handlebars.Utils.escapeExpression(matchingTag.get('name')),
             regex = new RegExp('(' + regexEscapedSearchTerm + ')', 'gi'),
             highlightedName,
-            suggestion = new Ember.Object();
+            suggestion = Ember.Object.create();
 
         highlightedName = tagName.replace(regex, '<mark>$1</mark>');
         highlightedName = new Ember.Handlebars.SafeString(highlightedName);
@@ -222,8 +237,7 @@ var PostTagsInputController = Ember.Controller.extend({
         suggestion.set('highlightedName', highlightedName);
 
         return suggestion;
-    },
-
+    }
 });
 
 export default PostTagsInputController;

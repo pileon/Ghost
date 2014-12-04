@@ -9,7 +9,6 @@ var makeRoute = function (root, args) {
     return route;
 };
 
-
 function ghostPaths() {
     var path = window.location.pathname,
         subdir = path.substr(0, path.search('/ghost/')),
@@ -25,10 +24,6 @@ function ghostPaths() {
         blogRoot: subdir + '/',
         adminRoot: adminRoot,
         apiRoot: apiRoot,
-        contributorsDir: assetUrl('/ghost/img/contributors'),
-        errorImageSrc: assetUrl('/ghost/img/404-ghost@2x.png'),
-        errorImageSrcSet: assetUrl('/ghost/img/404-ghost.png') + ' 1x, ' +
-            assetUrl('/ghost/img/404-ghost@2x.png') + ' 2x',
 
         url: {
             admin: function () {

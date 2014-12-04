@@ -122,6 +122,7 @@
         &.active .entry-preview-content {
             height: auto;
             overflow: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         // Restore the white bg of the currently .active tab, remove hand cursor from currently active tab
@@ -175,7 +176,7 @@
                 top: 40px;
             }
             @media (max-height: 560px) {
-                height: calc(100% - 40px);
+                height: calc(100% - 5px);
             }
 
             &:focus {
@@ -192,10 +193,13 @@
         left: 0;
         right: 0;
         bottom: 0;
-        font-family: $font-family-mono;
-        font-size: 1.4em;
-        line-height: 1.56em;
-        color: lighten($darkgrey, 10%);
+
+        pre {
+            font-size: 1.6rem;
+            line-height: 1.56em;
+            font-family: $font-family-mono;
+            color: lighten($darkgrey, 10%);
+        }
 
         .CodeMirror-focused,
         .CodeMirror-selected {
@@ -265,9 +269,10 @@
         left: 0;
         padding: 60px 40px 40px 40px;
         overflow: auto;
+        -webkit-overflow-scrolling: touch;
         word-break: break-word;
         hyphens: auto;
-        @include user-select(none);
+        user-select: none;
         cursor: default;
 
         // Tweak padding for smaller screens
@@ -421,7 +426,7 @@ body.zen {
     padding: 0;
     color: $midgrey;
     background: darken($darkgrey, 4%);
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -447,8 +452,6 @@ body.zen {
     }
 
     .splitbtn {
-        margin-top: -2px;
-
         .btn {
             border-top: rgba(255,255,255,0.3) 1px solid;
         }
@@ -518,10 +521,10 @@ body.zen {
         color: $lightgrey;
         white-space: nowrap;
         background: lighten($grey, 15%);
-        border-radius: $rounded;
+        border-radius: $border-radius;
         box-shadow: rgba(255,255,255,0.2) 0 1px 0 inset, #000 0 1px 3px;
 
-        @include user-select(none);
+        user-select: none;
 
         &:hover {
             cursor: pointer;
@@ -554,12 +557,25 @@ body.zen {
 }
 
 #entry-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-content: center;
+    align-items: center;
     margin-right: 6px;
     position: relative;
     .dropdown {
         position: absolute;
         bottom: 49px;
         right: 0;
+
+        &.fade-in-scale {
+            animation-duration: 0.1s;
+        }
+
+        &.fade-out {
+            animation-duration: 0.01s;
+        }
+
         .dropdown-menu {
             top: auto;
             left: auto;
@@ -609,6 +625,11 @@ body.zen {
         color: #fff;
     }
 }//.tag-label
+#entry-tags.focused {
+    .tag-label:before {
+        color: #fff;
+    }
+}
 
 .publish-bar-inner {
     display: flex;
@@ -634,7 +655,6 @@ body.zen {
     flex: 0 1 auto;
     align-self: auto;
     margin-right: 10px;
-    position: relative;
     height: 40px;
     overflow-y: hidden;
 
@@ -647,17 +667,6 @@ body.zen {
         height: 70px;
     }
 
-    &:after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 30px;
-        background: linear-gradient(to right, transparent 0%, darken($darkgrey, 4%) 100%);
-        pointer-events: none;
-    }
-
 }//.publish-bar-2
 
 .publish-bar-tags-input {
@@ -667,36 +676,16 @@ body.zen {
 }
 
 .publish-bar-actions {
-    flex: 0 1 auto;
+    display: flex;
+    flex: 1 0 auto;
     align-self: auto;
-    min-width: 174px;
-    max-width: 174px;
     text-align: right;
 }
-
-
-//
-// Post Settings Menu
-// --------------------------------------------------
-
- body.right-outlet-expanded {
-
-    .editor-cover {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 600;
-        transition: transform $side-outlet-transition-duration cubic-bezier(0.1, 0.7, 0.1, 1);
-        transform: translate3d(-350px, 0px, 0px); // Not off the screen, to give a parallax effect
-    }//.editor-cover
-}//body.right-outlet-expanded
 
 .post-settings {
     @include icon($i-settings, 14px);
     display: inline-block;
-    padding: 10px;
+    padding: 8px 10px;
     color: $midgrey;
     transition: all 0.15s ease-out 0s;
     position: relative;
@@ -717,6 +706,40 @@ body.zen {
     }
 
 } // .post-settings-menu
+
+
+//
+// Post Settings Menu eta Data
+// --------------------------------------------------
+
+// These styles are copied from Google.com
+.seo-preview {
+    font-family: Arial, sans-serif;
+}
+
+.seo-preview-title {
+    font-size: 1.8rem;
+    line-height: 2.16rem;
+    color: #1E0FBE;
+    text-overflow: ellipses;
+    -webkit-text-overflow: ellipsis;
+    word-wrap: break-word;
+}
+
+.seo-preview-link {
+    margin: 1px 0 2px 0;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
+    color: #006621;
+    word-wrap: break-word;
+}
+
+.seo-preview-description {
+    font-size: 1.3rem;
+    line-height: 1.4;
+    color: #545454;
+    word-wrap: break-word;
+}
 
 
 //

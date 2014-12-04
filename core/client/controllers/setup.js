@@ -19,7 +19,7 @@ var SetupController = Ember.ObjectController.extend(ValidationEngine, {
             self.notifications.closePassive();
 
             this.toggleProperty('submitting');
-            this.validate({ format: false }).then(function () {
+            this.validate({format: false}).then(function () {
                 ajax({
                     url: self.get('ghostPaths.url').api('authentication', 'setup'),
                     type: 'POST',
@@ -36,11 +36,11 @@ var SetupController = Ember.ObjectController.extend(ValidationEngine, {
                         identification: self.get('email'),
                         password: self.get('password')
                     });
-                }, function (resp) {
+                }).catch(function (resp) {
                     self.toggleProperty('submitting');
                     self.notifications.showAPIError(resp);
                 });
-            }, function (errors) {
+            }).catch(function (errors) {
                 self.toggleProperty('submitting');
                 self.notifications.showErrors(errors);
             });

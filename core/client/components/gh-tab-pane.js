@@ -1,4 +1,4 @@
-//See gh-tabs-manager.js for use
+// See gh-tabs-manager.js for use
 var TabPane = Ember.Component.extend({
     classNameBindings: ['active'],
 
@@ -6,7 +6,7 @@ var TabPane = Ember.Component.extend({
         return this.nearestWithProperty('isTabsManager');
     }),
 
-    tab: Ember.computed('tabsManager.tabs.@each', function () {
+    tab: Ember.computed('tabsManager.tabs.[]', 'tabsManager.tabPanes.[]', function () {
         var index = this.get('tabsManager.tabPanes').indexOf(this),
             tabs = this.get('tabsManager.tabs');
 
@@ -19,6 +19,7 @@ var TabPane = Ember.Component.extend({
     registerWithTabs: function () {
         this.get('tabsManager').registerTabPane(this);
     }.on('didInsertElement'),
+
     unregisterWithTabs: function () {
         this.get('tabsManager').unregisterTabPane(this);
     }.on('willDestroyElement')

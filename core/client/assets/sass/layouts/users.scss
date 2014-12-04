@@ -1,53 +1,68 @@
-//
+// ------------------------------------------------------------
 // Users
-// --------------------------------------------------
+//
+// Styles for the Users list page
 // Slug: /ghost/settings/users/
+//
+// * Users List
+// * Role Labels
+// * User Actions
+// * Invite User Modal
+// ------------------------------------------------------------
+
+
+//
+// Users List
 // --------------------------------------------------
-// TODO: Rename everything. This is a layout, rather
-// than a re-usable component.
 
 .invited-users {
     margin-bottom: 34px;
 }
 
-.object-list-title {
+.user-list-title {
     font-size: 13px;
     font-weight: normal;
     color: $midbrown;
     margin-bottom: 14px;
 }
 
-.object-list-item {
+.user-list-item {
 
-    @media (max-width: 500px) {
+    border-top: 1px solid $lightbrown;
+
+    @media (max-width: 550px) {
         display: block;
         padding: 15px 0;
         @include clearfix;
     }
 
-    @media (min-width: 501px) {
+    @media (min-width: 551px) {
         display: flex;
         justify-content: start;
         align-items: center;
         padding: 0 15px;
         height: 68px;
     }
-
-    border-top: 1px solid $lightbrown;
-
 }
 
-a.object-list-item {
+// Only apply these styles to anchor tags (pending invited are divs)
+a.user-list-item {
     text-decoration: none;
 
     // Hover states only for large viewports
     @media (min-width: 601px) {
-        &:hover { background: lighten($lightbrown, 5%); }
-        &:last-of-type:hover { box-shadow: inset 0px -1px 0px $lightbrown; }
+
+        &:hover {
+            background: lighten($lightbrown, 5%);
+        }
+
+        &:last-of-type:hover {
+            box-shadow: inset 0px -1px 0px $lightbrown;
+        }
     }
 }
 
-.object-list-item-icon {
+.user-list-item-icon {
     width: 35px;
     height: 35px;
     display: block;
@@ -70,31 +85,32 @@ a.object-list-item {
     }
 }
 
-.object-list-item-figure {
+.user-list-item-figure {
     width: 35px;
     height: 35px;
     display: block;
     border: 1px solid #979797;
     border-radius: 100%;
-    background-size: 105%;
+    background-size: cover;
     background-position: center center;
 }
 
-.object-list-item-icon,
-.object-list-item-figure {
-    @media (max-width: 500px) {
+.user-list-item-icon,
+.user-list-item-figure {
+
+    @media (max-width: 550px) {
         float: left;
         margin-right: 15px;
     }
 }
 
-.object-list-item-body {
+.user-list-item-body {
     flex: 1 1 auto;
     align-items: stretch;
     padding-left: 15px;
     line-height: 1;
 
-    @media (max-width: 500px) {
+    @media (max-width: 550px) {
         margin-top: 3px;
     }
 
@@ -104,6 +120,7 @@ a.object-list-item {
         font-weight: 400;
         color: $darkgrey;
     }
+
     .description {
         display: inline-block;
         font-size: 12px;
@@ -112,18 +129,20 @@ a.object-list-item {
         margin-top: 3px;
     }
 
-} //.object-list-item-body
+}//.user-list-item-body
 
-.object-list-item-aside {
-    @media (max-width: 500px) {
+.user-list-item-aside {
+
+    @media (max-width: 550px) {
         float: left;
         width: 100%;
         margin: 12px 0 0 50px;
     }
 
-    .object-list-action:not(:first-of-type) {
+    .user-list-action:not(:first-of-type) {
         margin-left: 20px;
-        @media (min-width: 501px) {
+
+        @media (min-width: 551px) {
             margin-left: 50px;
         }
     }
@@ -136,15 +155,12 @@ a.object-list-item {
     .role-label + .role-label {
         margin-left: 5px;
     }
-} // .object-list-item-aside
+}//.user-list-item-aside
 
-.object-list-action {
+.user-list-action {
     font-size: 11px;
     text-transform: uppercase;
     text-decoration: underline;
-    &:hover {
-
-    }
 }
 
 
@@ -177,8 +193,8 @@ a.object-list-item {
         color: rgba(255,255,255,0.8);
         background: $blue;
     }
+}//.role-label
 
-}
 
 //
 // User Actions
@@ -230,14 +246,9 @@ a.object-list-item {
         input {
             width: 100%;
         }
+    }//.form-group
 
-    } //.form-group
-
-    .button-add {
+    .btn-green {
         width: 100%;
-        padding: 0.85rem 1.9rem;
-        font-size: 14px;
-        line-height: 16px;
     }
-
-} //.invite-new-user
+}//.invite-new-user

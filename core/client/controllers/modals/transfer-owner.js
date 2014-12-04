@@ -5,13 +5,13 @@ var TransferOwnerController = Ember.Controller.extend({
                 url = this.get('ghostPaths.url').api('users', 'owner'),
                 self = this;
 
-            self.get('popover').closePopovers();
+            self.get('dropdown').closeDropdowns();
 
             ic.ajax.request(url, {
                 type: 'PUT',
                 data: {
                     owner: [{
-                        'id': user.get('id')
+                        id: user.get('id')
                     }]
                 }
             }).then(function (response) {
