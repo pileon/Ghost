@@ -9,7 +9,7 @@ CasperTest.begin('Content screen is correct', 17, function suite(test) {
 
     // Begin test
     casper.thenOpenAndWaitForPageLoad('content', function testTitleAndUrl() {
-        test.assertTitle('Ghost Admin', 'Title is "Ghost Admin"');
+        test.assertTitle('Content - Test Blog', 'Title is "Content - Test Blog"');
         test.assertUrlMatch(/ghost\/\d+\/$/, 'Landed on the correct URL');
     });
 
@@ -57,12 +57,12 @@ CasperTest.begin('Content list shows correct post status', 5, function testStati
 
     // Begin test
     casper.thenOpenAndWaitForPageLoad('content', function testTitleAndUrl() {
-        test.assertTitle('Ghost Admin', 'Title is "Ghost Admin"');
+        test.assertTitle('Content - Test Blog', 'Title is "Content - Test Blog"');
         test.assertUrlMatch(/ghost\/\d+\/$/, 'Landed on the correct URL');
     });
 
     // Select first non-draft, non-static post.  Should be second in the list at this stage of testing.
-    casper.thenClick('.content-list-content li:nth-of-type(2) a');
+    casper.thenClick('.content-list-content li:nth-of-type(3) a');
 
     // Test for status of 'Published'
     casper.then(function checkStatus() {
@@ -104,18 +104,18 @@ CasperTest.begin('Content list shows correct post status', 5, function testStati
 //    // Placeholder for infinite scrolling/pagination tests (will need to setup 16+ posts).
 //
 //    casper.thenOpenAndWaitForPageLoad('content', function testTitleAndUrl() {
-//        test.assertTitle('Ghost Admin', 'Title is "Ghost Admin"');
+//        test.assertTitle('Content - Test Blog', 'Title is "Content - Test Blog"');
 //        test.assertUrlMatch(/ghost\/\d+\/$/, 'Landed on the correct URL');
 //    });
 // });
 
-CasperTest.begin('Posts can be marked as featured', 8, function suite(test) {
+CasperTest.begin('Posts can be marked as featured', 6, function suite(test) {
     // Create a sample post
     CasperTest.Routines.createTestPost.run(false);
 
     // Begin test
     casper.thenOpenAndWaitForPageLoad('content', function testTitleAndUrl() {
-        test.assertTitle('Ghost Admin', 'Title is "Ghost Admin"');
+        test.assertTitle('Content - Test Blog', 'Title is "Content - Test Blog"');
         test.assertUrlMatch(/ghost\/\d+\/$/, 'Landed on the correct URL');
     });
 
@@ -140,14 +140,9 @@ CasperTest.begin('Posts can be marked as featured', 8, function suite(test) {
     // Mark as not featured
     casper.thenClick('.content-preview .featured');
 
-    casper.waitForResource(/\/posts\/\d+\/\?include=tags/, function waitForSuccess(resource) {
-        test.assert(resource.status < 400);
-    });
-
-    casper.then(function untoggledFeaturedTest() {
-        test.assertDoesntExist('.content-preview .featured', 'Untoggled featured.');
+    casper.waitWhileSelector('.content-preview .featured', function onSuccess() {
         test.assertDoesntExist('.content-list-content li.featured:first-of-type');
     }, function onTimeout() {
-        test.assert(false, 'Couldn\'t unfeature post.');
-    });
+        casper.test.fail('Couldn\'t unfeature post.');
+    }, 2000);
 });

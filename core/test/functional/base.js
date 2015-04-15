@@ -30,7 +30,7 @@ var DEBUG = false, // TOGGLE THIS TO GET MORE SCREENSHOTS
     url = 'http://' + host + (noPort ? '/' : ':' + port + '/'),
     newUser = {
         name: 'Test User',
-        slug: 'test-user',
+        slug: 'test',
         email: email,
         password: password
     },
@@ -82,15 +82,19 @@ screens = {
     },
     'settings.general': {
         url: 'ghost/settings/general',
-        selector: '.settings-menu-general.active'
+        selector: '.settings-nav-general.active'
+    },
+    'settings.about': {
+        url: 'ghost/settings/about',
+        selector: '.settings-nav-about.active'
     },
     'settings.users': {
         url: 'ghost/settings/users',
-        linkSelector: '.settings-menu-users a',
-        selector: '.settings-menu-users.active'
+        linkSelector: '.settings-nav-users a',
+        selector: '.settings-nav-users.active'
     },
     'settings.users.user': {
-        url: 'ghost/settings/users/test-user',
+        url: 'ghost/settings/users/test',
         linkSelector: '.user-menu-profile',
         selector: '.user-profile'
     },
@@ -123,20 +127,32 @@ screens = {
     }
 };
 
-casper.writeContentToCodeMirror = function (content) {
-    var lines = content.split('\n');
+casper.writeContentToEditor = function (content) {
+    // If we are on a new editor, the autosave is going to get triggered when we try to type, so we need to trigger
+    // that and wait for it to sort itself out
+    if (/ghost\/editor\/$/.test(casper.getCurrentUrl())) {
+        casper.waitForSelector('.entry-markdown-content textarea', function onSuccess() {
+            casper.click('.entry-markdown-content textarea');
+        }, function onTimeout() {
+            casper.test.fail('Editor was not found on initial load.');
+        }, 2000);
 
-    casper.waitForSelector('.CodeMirror-wrap textarea', function onSuccess() {
-        casper.each(lines, function (self, line) {
-            self.sendKeys('.CodeMirror-wrap textarea', line, {keepFocus: true});
-            self.sendKeys('.CodeMirror-wrap textarea', casper.page.event.key.Enter, {keepFocus: true});
-        });
+        casper.waitForUrl(/\/ghost\/editor\/\d+\/$/, function onSuccess() {
+            // do nothing
+        }, function onTimeout() {
+            casper.test.fail('The url didn\'t change: ' + casper.getCurrentUrl());
+        }, 2000);
+    }
 
-        casper.captureScreenshot('CodeMirror-Text.png');
+    casper.waitForSelector('.entry-markdown-content textarea', function onSuccess() {
+        casper.sendKeys('.entry-markdown-content textarea', content, {keepFocus: true});
+        // Always end with a new line
+        casper.sendKeys('.entry-markdown-content textarea', '\n', {keepFocus: true});
+        casper.captureScreenshot('EditorText.png');
 
         return this;
     }, function onTimeout() {
-        casper.test.fail('CodeMirror was not found.');
+        casper.test.fail('Editor was not found on main load.');
     }, 2000);
 };
 
@@ -231,7 +247,7 @@ casper.on('remote.message', function (msg) {
 // output any errors
 casper.on('error', function (msg, trace) {
     casper.echoConcise('ERROR, ' + msg, 'ERROR');
-    if (trace) {
+    if (trace && trace[0]) {
         casper.echoConcise('file:     ' + trace[0].file, 'WARNING');
         casper.echoConcise('line:     ' + trace[0].line, 'WARNING');
         casper.echoConcise('function: ' + trace[0]['function'], 'WARNING');
@@ -242,7 +258,7 @@ casper.on('error', function (msg, trace) {
 // output any page errors
 casper.on('page.error', function (msg, trace) {
     casper.echoConcise('PAGE ERROR: ' + msg, 'ERROR');
-    if (trace) {
+    if (trace && trace[0]) {
         casper.echoConcise('file:     ' + trace[0].file, 'WARNING');
         casper.echoConcise('line:     ' + trace[0].line, 'WARNING');
         casper.echoConcise('function: ' + trace[0]['function'], 'WARNING');
@@ -440,7 +456,7 @@ CasperTest.Routines = (function () {
     function createTestPost(publish) {
         casper.thenOpenAndWaitForPageLoad('editor', function createTestPost() {
             casper.sendKeys('#entry-title', testPost.title);
-            casper.writeContentToCodeMirror(testPost.html);
+            casper.writeContentToEditor(testPost.html);
             casper.sendKeys('#entry-tags input.tag-input', 'TestTag');
             casper.sendKeys('#entry-tags input.tag-input', casper.page.event.key.Enter);
         });

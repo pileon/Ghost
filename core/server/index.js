@@ -1,6 +1,5 @@
 // Module dependencies
-var crypto      = require('crypto'),
-    express     = require('express'),
+var express     = require('express'),
     hbs         = require('express-hbs'),
     compress    = require('compression'),
     fs          = require('fs'),
@@ -18,7 +17,8 @@ var crypto      = require('crypto'),
     models      = require('./models'),
     permissions = require('./permissions'),
     apps        = require('./apps'),
-    packageInfo = require('../../package.json'),
+    sitemap     = require('./data/xml/sitemap'),
+    xmlrpc      = require('./data/xml/xmlrpc'),
     GhostServer = require('./ghost-server'),
 
 // Variables
@@ -67,22 +67,30 @@ function initDbHashAndFirstRun() {
 // any are missing.
 function builtFilesExist() {
     var deferreds = [],
-        location = config.paths.builtScriptPath,
+        location = config.paths.clientAssets,
+        fileNames = ['ghost.js', 'vendor.js', 'ghost.css', 'vendor.css'];
 
-        fileNames = process.env.NODE_ENV === 'production' ?
-            helpers.scriptFiles.production : helpers.scriptFiles.development;
+    if (process.env.NODE_ENV === 'production') {
+        // Production uses `.min` files
+        fileNames = fileNames.map(function (file) {
+            return file.replace('.', '.min.');
+        });
+    }
 
     function checkExist(fileName) {
         var errorMessage = 'Javascript files have not been built.',
             errorHelp = '\nPlease read the getting started instructions at:' +
-                        '\nhttps://github.com/TryGhost/Ghost#getting-started-guide-for-developers';
+                        '\nhttps://github.com/TryGhost/Ghost#getting-started';
 
         return new Promise(function (resolve, reject) {
-            fs.exists(fileName, function (exists) {
+            fs.stat(fileName, function (statErr) {
+                var exists = (statErr) ? false : true,
+                    err;
+
                 if (exists) {
                     resolve(true);
                 } else {
-                    var err = new Error(errorMessage);
+                    err = new Error(errorMessage);
 
                     err.help = errorHelp;
                     reject(err);
@@ -132,9 +140,7 @@ function initNotifications() {
 function init(options) {
     // Get reference to an express app instance.
     var blogApp = express(),
-        adminApp = express(),
-        // create a hash for cache busting assets
-        assetHash = (crypto.createHash('md5').update(packageInfo.version + Date.now()).digest('hex')).substring(0, 10);
+        adminApp = express();
 
     // ### Initialisation
     // The server and its dependencies require a populated config
@@ -170,7 +176,11 @@ function init(options) {
             // Initialize mail
             mailer.init(),
             // Initialize apps
-            apps.init()
+            apps.init(),
+            // Initialize sitemaps
+            sitemap.init(),
+            // Initialize xmrpc ping
+            xmlrpc.init()
         );
     }).then(function () {
         var adminHbs = hbs.create();
@@ -179,7 +189,7 @@ function init(options) {
         initNotifications();
         // ##Configuration
 
-        // return the correct mime type for woff filess
+        // return the correct mime type for woff files
         express['static'].mime.define({'application/font-woff': ['woff']});
 
         // enabled gzip compression by default
@@ -196,7 +206,7 @@ function init(options) {
         adminApp.engine('hbs', adminHbs.express3({}));
 
         // Load helpers
-        helpers.loadCoreHelpers(adminHbs, assetHash);
+        helpers.loadCoreHelpers(adminHbs);
 
         // ## Middleware and Routing
         middleware(blogApp, adminApp);
