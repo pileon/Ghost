@@ -217,7 +217,7 @@ describe('Frontend Routing', function () {
             });
 
             it('should retrieve built assets', function (done) {
-                request.get('/ghost/scripts/vendor-dev.js')
+                request.get('/ghost/vendor.js')
                     .expect('Cache-Control', testUtils.cacheRules.year)
                     .expect(200)
                     .end(doEnd(done));
@@ -394,8 +394,9 @@ describe('Frontend Routing', function () {
                         siteDescription = '<description><![CDATA[Just a blogging platform.]]></description>',
                         siteUrl = '<link>http://127.0.0.1:2369/</link>',
                         postTitle = '<![CDATA[Welcome to Ghost]]>',
-                        postStart = '<description><![CDATA[<p>You\'re live!',
-                        postEnd = 'you think :)</p>]]></description>',
+                        descStart = '<description><![CDATA[<p>You\'re live!',
+                        postStart = '<content:encoded><![CDATA[<p>You\'re live!',
+                        postEnd = 'you think :)</p>]]></content:encoded>',
                         postLink = '<link>http://127.0.0.1:2369/welcome-to-ghost/</link>',
                         postCreator = '<dc:creator><![CDATA[Joe Bloggs]]>',
                         author = '<author>';
@@ -405,6 +406,7 @@ describe('Frontend Routing', function () {
                     content.indexOf(siteDescription).should.be.above(0);
                     content.indexOf(siteUrl).should.be.above(0);
                     content.indexOf(postTitle).should.be.above(0);
+                    content.indexOf(descStart).should.be.above(0);
                     content.indexOf(postStart).should.be.above(0);
                     content.indexOf(postEnd).should.be.above(0);
                     content.indexOf(postLink).should.be.above(0);
@@ -434,11 +436,49 @@ describe('Frontend Routing', function () {
                 .end(doEnd(done));
         });
 
-        describe('RSS pages', function () {
+        describe('More RSS', function () {
             before(function (done) {
                 testUtils.fixtures.insertPosts().then(function () {
-                    return testUtils.fixtures.insertMorePosts(11);
-                }).then(function () {
+                    done();
+                }).catch(done);
+            });
+
+            it('should use meta_description and image where available', function (done) {
+                var post1End = 'you think :)</p>]]></content:encoded>',
+                    post3Title = '<title><![CDATA[Short and Sweet]]>',
+                    post3DescStart = '<description><![CDATA[test stuff',
+                    post3ContentStart = '<content:encoded><![CDATA[<h2 id=\"testing\">testing</h2>\n\n' +
+                        '<img src=\"http:\/\/placekitten.com\/500\/200\"',
+                    post3Image = '<media:content url=\"http:\/\/placekitten.com\/500\/200\" medium=\"image\"\/>';
+
+                request.get('/rss/')
+                    .expect('Content-Type', 'text/xml; charset=utf-8')
+                    .expect('Cache-Control', testUtils.cacheRules['public'])
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) {
+                            return done(err);
+                        }
+
+                        var content = res.text,
+                            endIndex = content.indexOf(post1End);
+
+                        content.indexOf('<rss').should.be.above(0);
+                        content.indexOf(post1End).should.be.above(0);
+                        content.indexOf(post3Title).should.be.above(endIndex);
+                        content.indexOf(post3DescStart).should.be.above(endIndex);
+                        content.indexOf(post3ContentStart).should.be.above(endIndex);
+                        content.indexOf(post3Image).should.be.above(endIndex);
+                        content.indexOf('</rss>').should.be.above(0);
+
+                        done();
+                    });
+            });
+        });
+
+        describe('RSS pages', function () {
+            before(function (done) {
+                testUtils.fixtures.insertMorePosts(11).then(function () {
                     done();
                 }).catch(done);
             });
@@ -688,6 +728,154 @@ describe('Frontend Routing', function () {
         });
     });
 
+    describe('Subdirectory (no slash)', function () {
+        var forkedGhost, request;
+        before(function (done) {
+            var configTest = testUtils.fork.config();
+            configTest.url = 'http://localhost/blog';
+
+            testUtils.fork.ghost(configTest, 'testsubdir')
+                .then(function (child) {
+                    forkedGhost = child;
+                    request = require('supertest');
+                    request = request('http://localhost:' + child.port);
+                }).then(done).catch(done);
+        });
+
+        after(function (done) {
+            if (forkedGhost) {
+                forkedGhost.kill(done);
+            } else {
+                done(new Error('No forked ghost process exists, test setup must have failed.'));
+            }
+        });
+
+        it('http://localhost should 404', function (done) {
+            request.get('/')
+                .expect(404)
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/ should 404', function (done) {
+            request.get('/')
+                .expect(404)
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/blog should 303 to  http://localhost/blog/', function (done) {
+            request.get('/blog')
+                .expect(303)
+                .expect('Location', '/blog/')
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/blog/ should 200', function (done) {
+            request.get('/blog/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/blog/welcome-to-ghost should 301 to http://localhost/blog/welcome-to-ghost/', function (done) {
+            request.get('/blog/welcome-to-ghost')
+                .expect(301)
+                .expect('Location', '/blog/welcome-to-ghost/')
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/blog/welcome-to-ghost/ should 200', function (done) {
+            request.get('/blog/welcome-to-ghost/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+
+        it('/blog/tag/getting-started should 301 to /blog/tag/getting-started/', function (done) {
+            request.get('/blog/tag/getting-started')
+                .expect(301)
+                .expect('Location', '/blog/tag/getting-started/')
+                .end(doEnd(done));
+        });
+
+        it('/blog/tag/getting-started/ should 200', function (done) {
+            request.get('/blog/tag/getting-started/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+    });
+
+    describe('Subdirectory (with slash)', function () {
+        var forkedGhost, request;
+        before(function (done) {
+            var configTest = testUtils.fork.config();
+            configTest.url = 'http://localhost/blog/';
+
+            testUtils.fork.ghost(configTest, 'testsubdir')
+                .then(function (child) {
+                    forkedGhost = child;
+                    request = require('supertest');
+                    request = request('http://localhost:' + child.port);
+                }).then(done).catch(done);
+        });
+
+        after(function (done) {
+            if (forkedGhost) {
+                forkedGhost.kill(done);
+            } else {
+                done(new Error('No forked ghost process exists, test setup must have failed.'));
+            }
+        });
+
+        it('http://localhost should 404', function (done) {
+            request.get('/')
+                .expect(404)
+                .end(doEnd(done));
+        });
+
+        it('http://localhost/ should 404', function (done) {
+            request.get('/')
+                .expect(404)
+                .end(doEnd(done));
+        });
+
+        it('/blog should 303 to /blog/', function (done) {
+            request.get('/blog')
+                .expect(303)
+                .expect('Location', '/blog/')
+                .end(doEnd(done));
+        });
+
+        it('/blog/ should 200', function (done) {
+            request.get('/blog/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+
+        it('/blog/welcome-to-ghost should 301 to /blog/welcome-to-ghost/', function (done) {
+            request.get('/blog/welcome-to-ghost')
+                .expect(301)
+                .expect('Location', '/blog/welcome-to-ghost/')
+                .end(doEnd(done));
+        });
+
+        it('/blog/welcome-to-ghost/ should 200', function (done) {
+            request.get('/blog/welcome-to-ghost/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+
+        it('/blog/tag/getting-started should 301 to /blog/tag/getting-started/', function (done) {
+            request.get('/blog/tag/getting-started')
+                .expect(301)
+                .expect('Location', '/blog/tag/getting-started/')
+                .end(doEnd(done));
+        });
+
+        it('/blog/tag/getting-started/ should 200', function (done) {
+            request.get('/blog/tag/getting-started/')
+                .expect(200)
+                .end(doEnd(done));
+        });
+    });
+
     // we'll use X-Forwarded-Proto: https to simulate an 'https://' request behind a proxy
     describe('HTTPS', function () {
         var forkedGhost, request;
@@ -776,5 +964,38 @@ describe('Frontend Routing', function () {
                     done();
                 });
         });
+    });
+
+    describe('Site Map', function () {
+        before(function (done) {
+            testUtils.initData().then(function () {
+                return testUtils.fixtures.insertPosts();
+            }).then(function () {
+                done();
+            }).catch(done);
+        });
+
+        it('should serve sitemap.xml', function (done) {
+            request.get('/sitemap.xml')
+                .expect(200)
+                .expect('Content-Type', 'text/xml; charset=utf-8')
+                .end(doEnd(done));
+        });
+
+        it('should serve sitemap-posts.xml', function (done) {
+            request.get('/sitemap-posts.xml')
+                .expect(200)
+                .expect('Content-Type', 'text/xml; charset=utf-8')
+                .end(doEnd(done));
+        });
+
+        it('should serve sitemap-pages.xml', function (done) {
+            request.get('/sitemap-posts.xml')
+                .expect(200)
+                .expect('Content-Type', 'text/xml; charset=utf-8')
+                .end(doEnd(done));
+        });
+
+        // TODO: Other pages and verify content
     });
 });
